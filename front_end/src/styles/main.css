@@ -1,0 +1,110 @@
+/* Global */
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: #f4f6f9;
+  color: #1f2937;
+}
+
+h2, h3, h4 {
+  margin-bottom: 12px;
+}
+
+/* Container */
+.app-container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+/* Cards */
+.card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* Grid layout */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Form */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+.form-group input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* Buttons */
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #2563eb;
+  color: white;
+  text-align: left;
+  padding: 8px;
+}
+
+td {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Image */
+.placement-image {
+  max-width: 100%;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  background: #10b981;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin-right: 8px;
+}

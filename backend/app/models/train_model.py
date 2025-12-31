@@ -6,14 +6,22 @@ from sklearn.metrics import accuracy_score, classification_report, f1_score
 import joblib
 
 # Load dataset
-df = pd.read_csv("aeroponic_crop_placement_dataset.csv")
+df = pd.read_csv("aeroponic_crop_placement_dataset_realistic.csv")
+
+
 
 # Encode crop_type
 le = LabelEncoder()
 df["crop_type"] = le.fit_transform(df["crop_type"])
 
-# Features and target
-X = df.drop("yield_score", axis=1)
+
+
+# Features and target: use only those needed for prediction
+feature_cols = [
+    "crop_type", "temperature", "humidity", "sunlight_hours",
+    "wind_speed", "x_coord", "y_coord", "spacing", "shade_percent"
+]
+X = df[feature_cols]
 y = df["yield_score"]
 
 # Train-test split

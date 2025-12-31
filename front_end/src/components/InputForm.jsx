@@ -9,12 +9,12 @@ export default function InputForm({ onResult }) {
     sunlight_hours: 7,
     x_coord: 5,
     y_coord: 5,
-    spacing: 1.5,
+    spacing: 1.2,
     shade_percent: 10
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: Number(e.target.value) });
   };
 
   const handleSubmit = async (e) => {
@@ -25,25 +25,85 @@ export default function InputForm({ onResult }) {
 
   return (
     <div className="card">
-      <h3>Environmental Inputs</h3>
+      <h3>Environmental Conditions</h3>
 
-      <form onSubmit={handleSubmit} className="grid-2">
-        {Object.keys(form).map((key) => (
-          <div className="form-group" key={key}>
-            <label>{key.replace("_", " ")}</label>
-            <input
-              type="number"
-              name={key}
-              value={form[key]}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        ))}
-
-        <div style={{ gridColumn: "1 / -1" }}>
-          <button type="submit">Predict Crop Suitability</button>
+      <form onSubmit={handleSubmit}>
+        {/* Temperature */}
+        <div className="form-group">
+          <label>Temperature (°C): {form.temperature}</label>
+          <input
+            type="range"
+            name="temperature"
+            min="0"
+            max="45"
+            value={form.temperature}
+            onChange={handleChange}
+          />
         </div>
+
+        {/* Humidity */}
+        <div className="form-group">
+          <label>Humidity (%): {form.humidity}</label>
+          <input
+            type="range"
+            name="humidity"
+            min="20"
+            max="100"
+            value={form.humidity}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Sunlight */}
+        <div className="form-group">
+          <label>Sunlight Hours: {form.sunlight_hours}</label>
+          <input
+            type="range"
+            name="sunlight_hours"
+            min="0"
+            max="24"
+            value={form.sunlight_hours}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Spacing */}
+        <div className="form-group">
+          <label>Spacing (meters)</label>
+          <input
+            type="number"
+            name="spacing"
+            min="0.5"
+            max="5.0"
+            step="0.1"
+            value={form.spacing}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Wind Speed */}
+        <div className="form-group">
+          <label>Wind Speed (m/s)</label>
+          <input
+            type="number"
+            name="wind_speed"
+            value={form.wind_speed}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Shade Percentage */}
+        <div className="form-group">
+          <label>Shade Percentage</label>
+          <input
+            type="number"
+            name="shade_percent"
+            value={form.shade_percent}
+            onChange={handleChange}
+          />
+        </div>
+
+        <button type="submit">Predict Crop Suitability</button>
       </form>
     </div>
   );

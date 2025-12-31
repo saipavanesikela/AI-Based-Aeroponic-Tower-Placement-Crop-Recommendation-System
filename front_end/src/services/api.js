@@ -9,10 +9,11 @@ export async function predictCrops(inputData) {
   return response.json();
 }
 
-export async function optimizePlacement() {
+export async function optimizePlacement(farmData) {
   const response = await fetch(`${API_BASE_URL}/placement/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(farmData)
   });
   return response.json();
 }

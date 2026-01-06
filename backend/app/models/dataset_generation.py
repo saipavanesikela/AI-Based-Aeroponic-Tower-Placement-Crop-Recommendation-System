@@ -1,16 +1,9 @@
 import pandas as pd
 import random
 
-CROPS = ["lettuce", "basil", "parsley", "mint", "rosemary"]
-SEASONS = ["summer", "monsoon", "winter"]
 
-CROP_CONSTRAINTS = {
-    "lettuce": {"temp": (15, 28), "hum": (60, 90), "sun": (4, 8)},
-    "basil": {"temp": (22, 35), "hum": (50, 80), "sun": (6, 10)},
-    "parsley": {"temp": (18, 30), "hum": (50, 80), "sun": (4, 8)},
-    "mint": {"temp": (18, 30), "hum": (60, 90), "sun": (3, 7)},
-    "rosemary": {"temp": (20, 32), "hum": (40, 70), "sun": (7, 12)}
-}
+from app.core.config import CROP_CONSTRAINTS, CROPS
+SEASONS = ["summer", "monsoon", "winter"]
 
 def add_noise(value, percent=5):
     return round(value + value * random.uniform(-percent, percent) / 100, 2)

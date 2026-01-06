@@ -6,7 +6,13 @@ export async function predictCrops(inputData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(inputData)
   });
-  return response.json();
+  const data = await response.json();
+  if (!response.ok) {
+    // throw the backend error message if provided
+    const message = data.detail || data.error || "Prediction failed";
+    throw new Error(message);
+  }
+  return data;
 }
 
 export async function optimizePlacement(farmData) {
@@ -15,5 +21,24 @@ export async function optimizePlacement(farmData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(farmData)
   });
-  return response.json();
+  const data = await response.json();
+  if (!response.ok) {
+    const message = data.detail || data.error || "Placement failed";
+    throw new Error(message);
+  }
+  return data;
 }
+export async function fetchEnvironment(city) {
+  const res = await fetch(
+    `http://127.0.0.1:8000/environment?city=${city}`
+  );
+  return res.json();
+}
+export async function fetchEnvironmentByCoords(lat, lon) {
+  const res = await fetch(
+    `http://127.0.0.1:8000/environment/coords?lat=${lat}&lon=${lon}`
+  );
+  if (!res.ok) throw new Error("Failed");
+  return res.json();
+}
+

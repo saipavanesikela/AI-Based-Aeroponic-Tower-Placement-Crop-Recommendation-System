@@ -1,8 +1,17 @@
-# Aeroponic Tower Placement Backend
+# Backend
 
-This backend provides APIs for:
-- Crop suitability prediction using a trained Random Forest model
-- (Future) Tower placement optimization
+This backend provides APIs and services for the Aeroponic Tower Placement and Crop Recommendation System.
 
-Framework: FastAPI  
-ML Model: Random Forest Classifier
+## Quick Start
+1. Install dependencies: pip install -r requirements.txt
+2. Run: uvicorn app.main:app --reload
+
+## Structure
+- app/: Main application
+- models/: ML models and scripts
+- services/: ML and optimization services
+- api/: API endpoints
+- core/: Config and utilities
+
+## License
+MIT

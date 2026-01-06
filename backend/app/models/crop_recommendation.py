@@ -1,12 +1,11 @@
 import joblib
 import pandas as pd
 
-# Load trained model and encoder
-model = joblib.load("placement_model.pkl")
-encoder = joblib.load("crop_encoder.pkl")
 
-# Crops considered
-crops = ["lettuce", "basil", "parsley", "mint", "rosemary"]
+from app.core.config import CROPS, MODEL_PATH, ENCODER_PATH
+model = joblib.load(MODEL_PATH)
+encoder = joblib.load(ENCODER_PATH)
+crops = CROPS
 
 # -------- USER INPUT (example) --------
 user_input = {

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.services.ml_service import predict_crop_scores
 from app.core.schemas import PredictionInput
 
@@ -9,7 +9,7 @@ router = APIRouter(
 
 @router.post("/")
 def predict(input_data: PredictionInput):
-    return predict_crop_scores(
+    result = predict_crop_scores(
         input_data.temperature,
         input_data.humidity,
         input_data.wind_speed,
@@ -19,3 +19,7 @@ def predict(input_data: PredictionInput):
         input_data.spacing,
         input_data.shade_percent
     )
+    # If prediction returned an error key, surface as HTTP 400
+    if isinstance(result, dict) and result.get("error"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return result

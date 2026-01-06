@@ -1,26 +1,22 @@
-# Crop-specific agronomic constraints
-CROP_CONSTRAINTS = {
-    "lettuce": {"temp": (15, 28), "hum": (60, 90), "sun": (4, 8)},
-    "basil": {"temp": (22, 35), "hum": (50, 80), "sun": (6, 10)},
-    "parsley": {"temp": (18, 30), "hum": (50, 80), "sun": (4, 8)},
-    "mint": {"temp": (18, 30), "hum": (60, 90), "sun": (3, 7)},
-    "rosemary": {"temp": (20, 32), "hum": (40, 70), "sun": (7, 12)}
-}
+
+from app.core.config import CROP_CONSTRAINTS, CROPS, MODEL_PATH, ENCODER_PATH
 import joblib
 import pandas as pd
-from pathlib import Path
+import logging
 
-# -------------------------------------------------
-# LOAD MODEL & ENCODER
-# -------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent.parent
-MODEL_PATH = BASE_DIR / "models" / "placement_model.pkl"
-ENCODER_PATH = BASE_DIR / "models" / "crop_encoder.pkl"
+logger = logging.getLogger("ml_service")
 
-model = joblib.load(MODEL_PATH)
-encoder = joblib.load(ENCODER_PATH)
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception as e:
+    logger.exception("Failed to load model: %s", e)
+    model = None
 
-CROPS = ["lettuce", "basil", "parsley", "mint", "rosemary"]
+try:
+    encoder = joblib.load(ENCODER_PATH)
+except Exception as e:
+    logger.exception("Failed to load encoder: %s", e)
+    encoder = None
 
 # -------------------------------------------------
 # INPUT VALIDATION
@@ -118,6 +114,9 @@ def predict_crop_scores(
     spacing,
     shade_percent
 ):
+    logger.info("Predict called with: temp=%s hum=%s wind=%s sun=%s x=%s y=%s spacing=%s shade=%s",
+                temperature, humidity, wind_speed, sunlight_hours, x_coord, y_coord, spacing, shade_percent)
+
     # Basic validation
     error = validate_inputs(
         temperature,
@@ -129,6 +128,7 @@ def predict_crop_scores(
     )
 
     if error:
+        logger.warning("Validation failed: %s", error)
         return {
             "error": error,
             "recommended_crops": [],
@@ -146,56 +146,58 @@ def predict_crop_scores(
     results = []
 
     for crop in CROPS:
-        crop_encoded = encoder.transform([crop])[0]
-
-        for crop in CROPS:
-            crop_encoded = encoder.transform([crop])[0]
-            # Hard agronomic check
-            c = CROP_CONSTRAINTS[crop]
-            if not (c["temp"][0] <= temperature <= c["temp"][1] and c["hum"][0] <= humidity <= c["hum"][1] and c["sun"][0] <= sunlight_hours <= c["sun"][1]):
+        # Hard agronomic check
+        c = CROP_CONSTRAINTS[crop]
+        if not (c["temp"][0] <= temperature <= c["temp"][1] and c["hum"][0] <= humidity <= c["hum"][1] and c["sun"][0] <= sunlight_hours <= c["sun"][1]):
+            prediction = 0
+            final_confidence = 0.0
+        else:
+            # encode crop if encoder available
+            crop_encoded = encoder.transform([crop])[0] if encoder is not None else 0
+            input_df = pd.DataFrame([{
+                "crop_type": crop_encoded,
+                "temperature": temperature,
+                "humidity": humidity,
+                "sunlight_hours": sunlight_hours,
+                "wind_speed": wind_speed,
+                "x_coord": x_coord,
+                "y_coord": y_coord,
+                "spacing": spacing,
+                "shade_percent": shade_percent
+            }])
+            # Ensure column order matches training
+            input_df = input_df[[
+                "crop_type",
+                "temperature",
+                "humidity",
+                "sunlight_hours",
+                "wind_speed",
+                "x_coord",
+                "y_coord",
+                "spacing",
+                "shade_percent"
+            ]]
+            # ML prediction
+            if model is None or encoder is None:
                 prediction = 0
-                final_confidence = 0.0
+                probabilities = [0.0, 0.0]
             else:
-                input_df = pd.DataFrame([{
-                    "crop_type": crop_encoded,
-                    "temperature": temperature,
-                    "humidity": humidity,
-                    "sunlight_hours": sunlight_hours,
-                    "wind_speed": wind_speed,
-                    "x_coord": x_coord,
-                    "y_coord": y_coord,
-                    "spacing": spacing,
-                    "shade_percent": shade_percent
-                }])
-                # Ensure column order matches training
-                input_df = input_df[[
-                    "crop_type",
-                    "temperature",
-                    "humidity",
-                    "sunlight_hours",
-                    "wind_speed",
-                    "x_coord",
-                    "y_coord",
-                    "spacing",
-                    "shade_percent"
-                ]]
-                # ML prediction
                 prediction = model.predict(input_df)[0]
                 probabilities = model.predict_proba(input_df)[0]
-                raw_confidence = max(probabilities) * 100
-                penalty = extreme_condition_penalty(
-                    temperature, humidity, sunlight_hours
-                )
-                final_confidence = round(raw_confidence * penalty, 2)
-            explanation = generate_explanation(
-                crop, temperature, humidity, sunlight_hours
+            raw_confidence = max(probabilities) * 100
+            penalty = extreme_condition_penalty(
+                temperature, humidity, sunlight_hours
             )
-            results.append({
-                "crop": crop,
-                "suitability_score": int(prediction),
-                "confidence": final_confidence,
-                "explanation": explanation
-            })
+            final_confidence = round(raw_confidence * penalty, 2)
+        explanation = generate_explanation(
+            crop, temperature, humidity, sunlight_hours
+        )
+        results.append({
+            "crop": crop,
+            "suitability_score": int(prediction),
+            "confidence": final_confidence,
+            "explanation": explanation
+        })
     max_score = max(item["suitability_score"] for item in results)
     best_crops = [item for item in results if item["suitability_score"] == max_score]
     if best_crops:
@@ -205,7 +207,9 @@ def predict_crop_scores(
     else:
         recommended = []
 
-    return {
+    result = {
         "all_scores": results,
         "recommended_crops": recommended
     }
+    logger.info("Prediction result: %s crops=%d", "ok", len(results))
+    return result

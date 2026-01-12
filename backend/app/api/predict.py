@@ -12,12 +12,10 @@ def predict(input_data: PredictionInput):
     result = predict_crop_scores(
         input_data.temperature,
         input_data.humidity,
-        input_data.wind_speed,
         input_data.sunlight_hours,
-        input_data.x_coord,
-        input_data.y_coord,
-        input_data.spacing,
-        input_data.shade_percent
+        input_data.water_ph,
+        input_data.air_quality_index,
+        input_data.wind_speed
     )
     # If prediction returned an error key, surface as HTTP 400
     if isinstance(result, dict) and result.get("error"):

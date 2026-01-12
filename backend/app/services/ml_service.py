@@ -1,8 +1,8 @@
-
 from app.core.config import CROP_CONSTRAINTS, CROPS, MODEL_PATH, ENCODER_PATH
 import joblib
 import pandas as pd
 import logging
+from app.models.crop_recommendation import get_model, get_encoder, is_model_available
 
 logger = logging.getLogger("ml_service")
 
@@ -24,32 +24,32 @@ except Exception as e:
 def validate_inputs(
     temperature,
     humidity,
-    wind_speed,
     sunlight_hours,
-    spacing,
-    shade_percent
+    water_ph,
+    air_quality_index,
+    wind_speed
 ):
     if not (0 <= temperature <= 50):
         return "Temperature must be between 0 and 50 °C"
     if not (20 <= humidity <= 100):
         return "Humidity must be between 20% and 100%"
-    if not (0 <= wind_speed <= 10):
-        return "Wind speed must be between 0 and 10 m/s"
     if not (0 <= sunlight_hours <= 24):
         return "Sunlight hours must be between 0 and 24"
-    if not (0.5 <= spacing <= 5.0):
-        return "Spacing must be between 0.5 and 5 meters"
-    if not (0 <= shade_percent <= 100):
-        return "Shade percent must be between 0 and 100"
+    if not (4.5 <= water_ph <= 8.0):
+        return "Water pH must be between 4.5 and 8.0"
+    if not (0 <= air_quality_index <= 500):
+        return "Air Quality Index must be between 0 and 500"
+    if not (0 <= wind_speed <= 5.0):
+        return "Wind speed must be between 0 and 5 m/s"
     return None
 
 # -------------------------------------------------
 # EXTREME CONDITION HANDLING
 # -------------------------------------------------
-def is_impossible_condition(temperature, humidity):
-    return temperature >= 45 and humidity >= 95
+def is_impossible_condition(temperature, humidity, aqi):
+    return (temperature >= 45 and humidity >= 95) or aqi >= 400
 
-def extreme_condition_penalty(temperature, humidity, sunlight_hours):
+def extreme_condition_penalty(temperature, humidity, sunlight_hours, air_quality_index):
     penalty = 1.0
 
     if temperature > 40:
@@ -58,13 +58,15 @@ def extreme_condition_penalty(temperature, humidity, sunlight_hours):
         penalty *= 0.6
     if sunlight_hours > 12:
         penalty *= 0.7
+    if air_quality_index > 180:
+        penalty *= 0.6
 
     return penalty
 
 # -------------------------------------------------
 # RULE-BASED EXPLANATION
 # -------------------------------------------------
-def generate_explanation(crop, temperature, humidity, sunlight_hours):
+def generate_explanation(crop, temperature, humidity, sunlight_hours, water_ph, air_quality_index, wind_speed):
     reasons = []
 
     if crop == "lettuce":
@@ -98,6 +100,12 @@ def generate_explanation(crop, temperature, humidity, sunlight_hours):
             reasons.append("Needs strong sunlight")
         if humidity <= 70:
             reasons.append("Prefers low to moderate humidity")
+    if water_ph:
+        reasons.append(f"pH input: {water_ph}")
+    if air_quality_index:
+        reasons.append(f"AQI input: {air_quality_index}")
+    if wind_speed:
+        reasons.append(f"Wind input: {wind_speed}")
 
     return reasons or ["Suitable under given environmental conditions"]
 
@@ -107,24 +115,35 @@ def generate_explanation(crop, temperature, humidity, sunlight_hours):
 def predict_crop_scores(
     temperature,
     humidity,
-    wind_speed,
     sunlight_hours,
-    x_coord,
-    y_coord,
-    spacing,
-    shade_percent
+    water_ph,
+    air_quality_index,
+    wind_speed
 ):
-    logger.info("Predict called with: temp=%s hum=%s wind=%s sun=%s x=%s y=%s spacing=%s shade=%s",
-                temperature, humidity, wind_speed, sunlight_hours, x_coord, y_coord, spacing, shade_percent)
+    if not is_model_available():
+        return {"error": "Model artifacts not available. Run training or place model/encoder .pkl files in backend/app/models"}
+
+    model = get_model()
+    encoder = get_encoder()
+
+    logger.info(
+        "Predict called with: temp=%s hum=%s sun=%s ph=%s aqi=%s wind=%s",
+        temperature,
+        humidity,
+        sunlight_hours,
+        water_ph,
+        air_quality_index,
+        wind_speed,
+    )
 
     # Basic validation
     error = validate_inputs(
         temperature,
         humidity,
-        wind_speed,
         sunlight_hours,
-        spacing,
-        shade_percent
+        water_ph,
+        air_quality_index,
+        wind_speed
     )
 
     if error:
@@ -136,7 +155,7 @@ def predict_crop_scores(
         }
 
     # Hard rejection for impossible environment
-    if is_impossible_condition(temperature, humidity):
+    if is_impossible_condition(temperature, humidity, air_quality_index):
         return {
             "error": "Environmental conditions are unsuitable for aeroponic crop growth",
             "recommended_crops": [],
@@ -148,7 +167,14 @@ def predict_crop_scores(
     for crop in CROPS:
         # Hard agronomic check
         c = CROP_CONSTRAINTS[crop]
-        if not (c["temp"][0] <= temperature <= c["temp"][1] and c["hum"][0] <= humidity <= c["hum"][1] and c["sun"][0] <= sunlight_hours <= c["sun"][1]):
+        if not (
+            c["temp"][0] <= temperature <= c["temp"][1]
+            and c["hum"][0] <= humidity <= c["hum"][1]
+            and c["sun"][0] <= sunlight_hours <= c["sun"][1]
+            and c["ph"][0] <= water_ph <= c["ph"][1]
+            and air_quality_index <= c["aqi"]
+            and c["wind"][0] <= wind_speed <= c["wind"][1]
+        ):
             prediction = 0
             final_confidence = 0.0
         else:
@@ -159,11 +185,9 @@ def predict_crop_scores(
                 "temperature": temperature,
                 "humidity": humidity,
                 "sunlight_hours": sunlight_hours,
-                "wind_speed": wind_speed,
-                "x_coord": x_coord,
-                "y_coord": y_coord,
-                "spacing": spacing,
-                "shade_percent": shade_percent
+                "water_ph": water_ph,
+                "air_quality_index": air_quality_index,
+                "wind_speed": wind_speed
             }])
             # Ensure column order matches training
             input_df = input_df[[
@@ -171,26 +195,24 @@ def predict_crop_scores(
                 "temperature",
                 "humidity",
                 "sunlight_hours",
-                "wind_speed",
-                "x_coord",
-                "y_coord",
-                "spacing",
-                "shade_percent"
+                "water_ph",
+                "air_quality_index",
+                "wind_speed"
             ]]
             # ML prediction
             if model is None or encoder is None:
                 prediction = 0
-                probabilities = [0.0, 0.0]
+                probabilities = [0.0] * len(getattr(model, "classes_", [0]))
             else:
                 prediction = model.predict(input_df)[0]
                 probabilities = model.predict_proba(input_df)[0]
             raw_confidence = max(probabilities) * 100
             penalty = extreme_condition_penalty(
-                temperature, humidity, sunlight_hours
+                temperature, humidity, sunlight_hours, air_quality_index
             )
             final_confidence = round(raw_confidence * penalty, 2)
         explanation = generate_explanation(
-            crop, temperature, humidity, sunlight_hours
+            crop, temperature, humidity, sunlight_hours, water_ph, air_quality_index, wind_speed
         )
         results.append({
             "crop": crop,

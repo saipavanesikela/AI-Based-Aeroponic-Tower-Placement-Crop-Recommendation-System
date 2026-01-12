@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 # Routers
 from app.api.predict import router as predict_router
 from app.api.placement import router as placement_router
 from app.api.environment import router as environment_router
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Aeroponic Optimization API")
 
@@ -23,8 +24,10 @@ app.include_router(predict_router)
 app.include_router(placement_router)
 app.include_router(environment_router)
 
-# Serve generated images and other static data
-app.mount("/static", StaticFiles(directory="app/data"), name="static")
+# Serve generated images and other static data (absolute path for reliability)
+STATIC_DIR = Path(__file__).resolve().parent / "data"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.get("/")

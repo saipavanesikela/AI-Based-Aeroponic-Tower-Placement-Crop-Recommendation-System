@@ -26,40 +26,43 @@ export default function ResultsTable({ data, error }) {
     new Map(results.map(item => [item.crop, item])).values()
   );
 
-  // Find best crop (if any)
-  const bestCrop = uniqueScores[0] || null;
+  // Find best crop by score then confidence
+  const bestCrop = uniqueScores
+    .slice()
+    .sort((a, b) => {
+      if (b.suitability_score !== a.suitability_score) return b.suitability_score - a.suitability_score;
+      return (b.confidence || 0) - (a.confidence || 0);
+    })[0] || null;
   // Confidence threshold (if you want to highlight)
   const CONFIDENCE_THRESHOLD = 70;
   const isCropRecommended = bestCrop && bestCrop.confidence >= CONFIDENCE_THRESHOLD;
 
+  const topExplanations = bestCrop?.explanation?.slice(0, 3) || [];
+
   return (
     <div>
-      {/* ---------- Decision Message ---------- */}
-      {isCropRecommended ? (
-        <div
-          style={{
-            padding: "10px",
-            marginBottom: "12px",
-            backgroundColor: "#ecfdf5",
-            color: "#065f46",
-            borderRadius: "6px",
-            fontSize: "14px"
-          }}
-        >
-          Suitable crop identified: <strong>{bestCrop.crop}</strong>
-        </div>
-      ) : (
-        <div
-          style={{
-            padding: "10px",
-            marginBottom: "12px",
-            backgroundColor: "#fef2f2",
-            color: "#991b1b",
-            borderRadius: "6px",
-            fontSize: "14px"
-          }}
-        >
-          No crop recommended for the given environmental conditions
+      <div className="decision-banner" data-state={isCropRecommended ? "ok" : "warn"}>
+        {isCropRecommended ? (
+          <>
+            <span className="dot" aria-hidden="true" />
+            Suitable crop identified: <strong>{bestCrop.crop}</strong>
+          </>
+        ) : (
+          <>
+            <span className="dot" aria-hidden="true" />
+            No crop recommended for the given environmental conditions
+          </>
+        )}
+      </div>
+
+      {isCropRecommended && topExplanations.length > 0 && (
+        <div className="card-lite" style={{ marginBottom: 12 }}>
+          <div className="card-lite-title">Why this crop</div>
+          <ul className="explanation-list">
+            {topExplanations.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
         </div>
       )}
       {/* ---------- Table ---------- */}

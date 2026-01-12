@@ -28,17 +28,4 @@ export async function optimizePlacement(farmData) {
   }
   return data;
 }
-export async function fetchEnvironment(city) {
-  const res = await fetch(
-    `http://127.0.0.1:8000/environment?city=${city}`
-  );
-  return res.json();
-}
-export async function fetchEnvironmentByCoords(lat, lon) {
-  const res = await fetch(
-    `http://127.0.0.1:8000/environment/coords?lat=${lat}&lon=${lon}`
-  );
-  if (!res.ok) throw new Error("Failed");
-  return res.json();
-}
 

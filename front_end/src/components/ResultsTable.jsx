@@ -34,7 +34,7 @@ export default function ResultsTable({ data, error }) {
       return (b.confidence || 0) - (a.confidence || 0);
     })[0] || null;
   // Confidence threshold (if you want to highlight)
-  const CONFIDENCE_THRESHOLD = 70;
+  const CONFIDENCE_THRESHOLD = 74; // match backend recommendation threshold
   const isCropRecommended = bestCrop && bestCrop.confidence >= CONFIDENCE_THRESHOLD;
 
   const topExplanations = bestCrop?.explanation?.slice(0, 3) || [];

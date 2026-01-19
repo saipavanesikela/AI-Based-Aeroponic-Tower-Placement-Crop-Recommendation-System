@@ -22,3 +22,9 @@ MODELS_DIR = BASE_DIR / "models"
 # Update these names to match your saved artifacts
 MODEL_PATH = MODELS_DIR / "placement_model.pkl"
 ENCODER_PATH = MODELS_DIR / "crop_encoder.pkl"
+
+# Calibrated model (optional). If present, API will prefer this for calibrated probabilities
+CALIBRATED_MODEL_PATH = MODELS_DIR / "placement_model_calibrated.pkl"
+
+# Minimum confidence (%) required to include a crop in `recommended_crops`
+RECOMMENDATION_CONFIDENCE_THRESHOLD = 74

@@ -42,18 +42,37 @@ export default function Home() {
         <h1>Smarter tower placement</h1>
         <p>Enter your on-site conditions, get the best crop for your towers, then lay out towers with safe spacing.</p>
         <div className="hero-stats">
-          <div className="stat-card">
-            <div className="stat-label">Inputs</div>
-            <div className="stat-value">6 factors</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Model</div>
-            <div className="stat-value">RF, weighted</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Outputs</div>
-            <div className="stat-value">Crop + score</div>
-          </div>
+          {view === "placement" ? (
+            <>
+              <div className="stat-card">
+                <div className="stat-label">Inputs</div>
+                <div className="stat-value">6 factors</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">Model</div>
+                <div className="stat-value">RF, weighted</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">Outputs</div>
+                <div className="stat-value">Crop + score</div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="stat-card">
+                <div className="stat-label">Inputs</div>
+                <div className="stat-value">6 factors</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">Model</div>
+                <div className="stat-value">RF, weighted</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">Outputs</div>
+                <div className="stat-value">Crop + score</div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

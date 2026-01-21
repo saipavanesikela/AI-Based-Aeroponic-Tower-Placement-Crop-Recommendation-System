@@ -26,13 +26,14 @@ export default function ResultsTable({ data, error }) {
     new Map(results.map(item => [item.crop, item])).values()
   );
 
-  // Find best crop by score then confidence
-  const bestCrop = uniqueScores
-    .slice()
-    .sort((a, b) => {
-      if (b.suitability_score !== a.suitability_score) return b.suitability_score - a.suitability_score;
-      return (b.confidence || 0) - (a.confidence || 0);
-    })[0] || null;
+  // Sort scores by confidence (descending) and pick best
+  const sortedScores = uniqueScores.slice().sort((a, b) => {
+    const ca = typeof a.confidence === 'number' ? a.confidence : 0;
+    const cb = typeof b.confidence === 'number' ? b.confidence : 0;
+    if (cb !== ca) return cb - ca;
+    return (a.crop || '').localeCompare(b.crop || '');
+  });
+  const bestCrop = sortedScores[0] || null;
   // Confidence threshold (if you want to highlight)
   const CONFIDENCE_THRESHOLD = 74; // match backend recommendation threshold
   const isCropRecommended = bestCrop && bestCrop.confidence >= CONFIDENCE_THRESHOLD;
@@ -71,12 +72,11 @@ export default function ResultsTable({ data, error }) {
           <thead>
             <tr>
               <th>Crop</th>
-              <th>Suitability Score</th>
               <th>Confidence (%)</th>
             </tr>
           </thead>
           <tbody>
-            {uniqueScores.map((item) => (
+            {sortedScores.map((item) => (
               <tr
                 key={item.crop}
                 style={{
@@ -91,8 +91,7 @@ export default function ResultsTable({ data, error }) {
                 }}
               >
                 <td>{item.crop}</td>
-                <td>{item.suitability_score}</td>
-                <td>{item.confidence}</td>
+                <td style={{ textAlign: 'right', paddingRight: 6 }}>{typeof item.confidence === 'number' ? Math.round(item.confidence) + '%' : item.confidence}</td>
               </tr>
             ))}
           </tbody>

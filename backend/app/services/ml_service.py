@@ -31,6 +31,27 @@ def validate_inputs(temperature, humidity, sunlight_hours, water_ph, air_quality
     return None
 
 
+def validate_and_gate_inputs(temperature, water_ph, air_quality_index):
+    """
+    Hard safety rules that run before ML prediction. If any rule fails,
+    the inputs are immediately rejected as UNSUITABLE (class 0).
+
+    Rules:
+    - temperature > 40 or temperature < 10 -> UNSUITABLE
+    - water_ph < 4.8 or water_ph > 7.2 -> UNSUITABLE
+    - air_quality_index > 180 -> UNSUITABLE
+
+    Returns: (passes: bool, reason: str)
+    """
+    if temperature > 40 or temperature < 10:
+        return False, "Temperature outside safe bounds"
+    if water_ph < 4.8 or water_ph > 7.2:
+        return False, "Water pH outside safe bounds"
+    if air_quality_index > 180:
+        return False, "Air Quality Index too high"
+    return True, "OK"
+
+
 def is_impossible_condition(temperature, humidity, aqi):
     return (temperature >= 45 and humidity >= 95) or aqi >= 400
 
@@ -79,6 +100,22 @@ def predict_crop_scores(
     error = validate_inputs(temperature, humidity, sunlight_hours, water_ph, air_quality_index, wind_speed)
     if error:
         return {"error": error, "recommended_crops": [], "all_scores": []}
+
+    # Hard-rule gating before any ML work
+    passes, reason = validate_and_gate_inputs(temperature, water_ph, air_quality_index)
+    if not passes:
+        # Return a rule-based rejection for all crops
+        results = []
+        for crop in CROPS:
+            results.append({
+                "crop": crop,
+                "suitability_class": 0,
+                "model_raw_score": None,
+                "confidence": 100.0,
+                "agronomic_ok": False,
+                "explanation": ["Rule-based rejection: " + reason],
+            })
+        return {"all_scores": results, "recommended_crops": [], "rule_rejection": True}
 
     if is_impossible_condition(temperature, humidity, air_quality_index):
         return {"error": "Environmental conditions are unsuitable for aeroponic crop growth", "recommended_crops": [], "all_scores": []}
@@ -134,10 +171,9 @@ def predict_crop_scores(
         except Exception:
             raw_score = 0.0
 
-        suitability_score = int(np.clip(np.rint(raw_score), 0, 3))
-
-        # Include model-predicted suitability for visibility (do not zero it out)
-        prediction = suitability_score
+        # Map model output to 3-class range [0,2]
+        suitability_class = int(np.clip(np.rint(raw_score), 0, 2))
+        prediction = suitability_class
         agronomic_flag = bool(agronomic_ok)
 
         # Include raw model score for visibility
@@ -146,7 +182,7 @@ def predict_crop_scores(
         explanation = generate_explanation(crop, temperature, humidity, sunlight_hours, water_ph, air_quality_index, wind_speed)
         results.append({
             "crop": crop,
-            "suitability_score": int(prediction),
+            "suitability_class": int(prediction),
             "model_raw_score": model_raw,
             "confidence": final_confidence,
             "agronomic_ok": agronomic_flag,
@@ -157,8 +193,8 @@ def predict_crop_scores(
     eligible = [r for r in results if r.get("agronomic_ok")]
     recommended = []
     if eligible:
-        max_score = max(item["suitability_score"] for item in eligible)
-        best_crops = [item for item in eligible if item["suitability_score"] == max_score]
+        max_score = max(item["suitability_class"] for item in eligible)
+        best_crops = [item for item in eligible if item["suitability_class"] == max_score]
         if best_crops:
             best_crop = max(best_crops, key=lambda x: x.get("confidence", 0))
             if best_crop.get("confidence", 0) >= RECOMMENDATION_CONFIDENCE_THRESHOLD:

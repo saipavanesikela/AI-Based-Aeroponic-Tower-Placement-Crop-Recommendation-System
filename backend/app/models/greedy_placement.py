@@ -2,6 +2,14 @@ from typing import List, Tuple
 import math
 
 
+def is_valid(point, placed, min_dist):
+    """Check minimum spacing constraint"""
+    for p in placed:
+        if math.dist(point, p) < min_dist:
+            return False
+    return True
+
+
 def optimize_tower_placement(
     farm_length: float,
     farm_width: float,
@@ -9,7 +17,7 @@ def optimize_tower_placement(
     max_towers: int
 ) -> List[Tuple[float, float]]:
     """
-    Optimized hexagonal (offset) placement of aeroponic towers
+    Deterministic greedy placement of aeroponic towers
     """
 
     if farm_length <= 0 or farm_width <= 0:
@@ -18,32 +26,22 @@ def optimize_tower_placement(
     if min_spacing <= 0:
         raise ValueError("Minimum spacing must be positive")
 
-    towers = []
+    placed = []
 
-    # Vertical spacing for hex grid
-    vertical_spacing = min_spacing * math.sqrt(3) / 2
+    x = min_spacing / 2
+    while x <= farm_length - min_spacing / 2:
+        y = min_spacing / 2
+        while y <= farm_width - min_spacing / 2:
 
-    row = 0
-    y = min_spacing / 2
-
-    while y <= farm_width - min_spacing / 2:
-        # Offset every alternate row
-        x_offset = (min_spacing / 2) if row % 2 == 1 else 0
-        x = min_spacing / 2 + x_offset
-
-        while x <= farm_length - min_spacing / 2:
             candidate = (round(x, 2), round(y, 2))
 
-            # Enforce minimum distance
-            if all(math.dist(candidate, t) >= min_spacing for t in towers):
-                towers.append(candidate)
+            if is_valid(candidate, placed, min_spacing):
+                placed.append(candidate)
 
-                if len(towers) >= max_towers:
-                    return towers
+                if len(placed) >= max_towers:
+                    return placed
 
-            x += min_spacing
+            y += min_spacing
+        x += min_spacing
 
-        y += vertical_spacing
-        row += 1
-
-    return towers
+    return placed

@@ -7,7 +7,6 @@ from pathlib import Path
 from app.api.predict import router as predict_router
 from app.api.placement import router as placement_router
 from app.api.environment import router as environment_router
-from app.api.metrics import router as metrics_router
 
 app = FastAPI(title="Aeroponic Optimization API")
 
@@ -24,7 +23,6 @@ app.add_middleware(
 app.include_router(predict_router)
 app.include_router(placement_router)
 app.include_router(environment_router)
-app.include_router(metrics_router)
 
 # Serve generated images and other static data (absolute path for reliability)
 STATIC_DIR = Path(__file__).resolve().parent / "data"

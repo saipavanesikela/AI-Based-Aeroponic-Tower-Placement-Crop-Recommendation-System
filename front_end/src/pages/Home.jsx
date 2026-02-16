@@ -39,22 +39,9 @@ export default function Home() {
     <div className="page-shell">
       <div className="hero">
         <div className="pill">Aeroponics • Live control</div>
-        <h1>Smarter tower placement</h1>
-        <p>Enter your on-site conditions, get the best crop for your towers, then lay out towers with safe spacing.</p>
-        <div className="hero-stats">
-          <div className="stat-card">
-            <div className="stat-label">Inputs</div>
-            <div className="stat-value">6 factors</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Model</div>
-            <div className="stat-value">RF, weighted</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Outputs</div>
-            <div className="stat-value">Crop + score</div>
-          </div>
-        </div>
+        <h1>Smarter Tower Placement & Crop Recommendations</h1>
+        <p>Provide your on-site environmental conditions to receive the top crop recommendation and optimized tower layout tailored for aeroponic systems.</p>
+        
       </div>
 
       <div className="toggle-bar">
@@ -146,10 +133,10 @@ export default function Home() {
             <div className="panel tips-panel">
               <h3>Quick tips</h3>
               <ul className="tips-list">
-                <li>Stay inside the shown ranges to avoid hard rejections.</li>
-                <li>pH 5.5–6.5 keeps most leafy greens happy.</li>
-                <li>AQI above 180 sharply reduces suitability.</li>
-                <li>Wind above 5 m/s is too harsh for these towers.</li>
+                <li>Enter accurate site measurements — precise inputs yield better recommendations.</li>
+                <li>Target water pH between 5.5 and 6.5 for most leafy crops.</li>
+                <li>Air Quality Index (AQI) over 180 significantly reduces crop suitability.</li>
+                <li>Keep sustained wind speeds below 5 m/s to maintain tower stability.</li>
               </ul>
             </div>
           )}

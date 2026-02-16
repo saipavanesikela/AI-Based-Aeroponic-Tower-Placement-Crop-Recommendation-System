@@ -16,7 +16,9 @@ export default function ResultsTable({ data, error }) {
   }
 
   // Accepts 'data' prop for compatibility with Home.jsx
+  // If backend returns an object, prefer `all_scores` and `recommended_crops`.
   const results = Array.isArray(data) ? data : (data && data.all_scores ? data.all_scores : []);
+  const backendRecommended = data && data.recommended_crops ? data.recommended_crops : [];
   if (!results || !Array.isArray(results) || results.length === 0) {
     return <div style={{ color: '#888', textAlign: 'center', margin: '24px 0', fontStyle: 'italic' }}>No results to display.</div>;
   }
@@ -26,16 +28,24 @@ export default function ResultsTable({ data, error }) {
     new Map(results.map(item => [item.crop, item])).values()
   );
 
-  // Find best crop by score then confidence
+  // Find best crop by confidence (primary) then suitability_score (tie-breaker)
   const bestCrop = uniqueScores
     .slice()
     .sort((a, b) => {
-      if (b.suitability_score !== a.suitability_score) return b.suitability_score - a.suitability_score;
-      return (b.confidence || 0) - (a.confidence || 0);
+      if ((b.confidence || 0) !== (a.confidence || 0)) return (b.confidence || 0) - (a.confidence || 0);
+      return (b.suitability_score || 0) - (a.suitability_score || 0);
     })[0] || null;
+  const recommendedFromBackend = backendRecommended && backendRecommended.length > 0 ? backendRecommended[0] : null;
+  const displayedCropName = recommendedFromBackend || (bestCrop && bestCrop.crop) || null;
+  const displayedCropEntry = uniqueScores.find((it) => it.crop === displayedCropName) || bestCrop || null;
   // Confidence threshold (if you want to highlight)
   const CONFIDENCE_THRESHOLD = 74; // match backend recommendation threshold
-  const isCropRecommended = bestCrop && bestCrop.confidence >= CONFIDENCE_THRESHOLD;
+
+  // Consider backend `recommended_crops` first to avoid contradictory UI.
+  const isCropRecommended = Boolean(
+    (backendRecommended && backendRecommended.length > 0) ||
+    (bestCrop && bestCrop.confidence >= CONFIDENCE_THRESHOLD)
+  );
 
   const topExplanations = bestCrop?.explanation?.slice(0, 3) || [];
 
@@ -45,21 +55,21 @@ export default function ResultsTable({ data, error }) {
         {isCropRecommended ? (
           <>
             <span className="dot" aria-hidden="true" />
-            Suitable crop identified: <strong>{bestCrop.crop}</strong>
+            Recommended crop: <strong>{displayedCropEntry ? displayedCropEntry.crop : (bestCrop && bestCrop.crop)}</strong>
           </>
         ) : (
-          <>
-            <span className="dot" aria-hidden="true" />
-            No crop recommended for the given environmental conditions
-          </>
+            <>
+              <span className="dot" aria-hidden="true" />
+              No crop recommended for the given environmental conditions
+            </>
         )}
       </div>
 
-      {isCropRecommended && topExplanations.length > 0 && (
+      {isCropRecommended && (displayedCropEntry?.explanation || []).slice(0,3).length > 0 && (
         <div className="card-lite" style={{ marginBottom: 12 }}>
           <div className="card-lite-title">Why this crop</div>
           <ul className="explanation-list">
-            {topExplanations.map((item, idx) => (
+            {(displayedCropEntry?.explanation || []).slice(0,3).map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
           </ul>
@@ -71,7 +81,6 @@ export default function ResultsTable({ data, error }) {
           <thead>
             <tr>
               <th>Crop</th>
-              <th>Suitability Score</th>
               <th>Confidence (%)</th>
             </tr>
           </thead>
@@ -81,7 +90,7 @@ export default function ResultsTable({ data, error }) {
                 key={item.crop}
                 style={{
                   fontWeight:
-                    isCropRecommended && item.crop === bestCrop.crop
+                    isCropRecommended && item.crop === (displayedCropEntry ? displayedCropEntry.crop : bestCrop?.crop)
                       ? "600"
                       : "normal",
                   backgroundColor:
@@ -91,17 +100,16 @@ export default function ResultsTable({ data, error }) {
                 }}
               >
                 <td>{item.crop}</td>
-                <td>{item.suitability_score}</td>
-                <td>{item.confidence}</td>
+                  <td>{item.confidence}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       {/* ---------- Recommended Crop (ONLY IF VALID) ---------- */}
-      {isCropRecommended && (
+      {isCropRecommended && displayedCropEntry && (
         <div style={{ marginTop: "12px" }}>
-          <strong>Recommended Crop:</strong> {bestCrop.crop}
+          <strong>Recommended Crop:</strong> {displayedCropEntry.crop}
         </div>
       )}
     </div>

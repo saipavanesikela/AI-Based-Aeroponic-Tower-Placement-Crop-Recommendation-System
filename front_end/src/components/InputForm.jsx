@@ -70,7 +70,7 @@ export default function InputForm({ onResult }) {
 
   return (
     <div className="modern-form-card">
-      <div className="form-title" style={{ marginTop: 0 }}>Enter Crop Prediction Details</div>
+      <div className="form-title" style={{ marginTop: 0 }}>Site conditions for recommendation</div>
       <div className="field-grid">
         <div className="form-group">
           <label>Temperature (°C)</label>
@@ -176,7 +176,7 @@ export default function InputForm({ onResult }) {
         </div>
       </div>
       <button type="button" onClick={handlePredict} disabled={loading} style={{ marginTop: 10, fontWeight: 600, fontSize: 16 }}>
-        Predict Crop Suitability
+        Get Crop Recommendation
       </button>
       {successMsg && <div className="success-msg">{successMsg}</div>}
     </div>

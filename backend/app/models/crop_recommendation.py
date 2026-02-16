@@ -3,44 +3,73 @@ import joblib
 import pandas as pd
 
 
-from app.core.config import CROPS, MODEL_PATH, ENCODER_PATH, CALIBRATED_MODEL_PATH
+from app.core.config import CROPS, MODEL_PATH, ENCODER_PATH, CALIBRATED_MODEL_PATH, SCALER_PATH
 
 _model = None
 _calibrated = None
 _encoder = None
+_scaler = None
 
-try:
-    _model = joblib.load(MODEL_PATH)
-except Exception as e:
-    print(f"Warning: failed to load model from {MODEL_PATH}: {e}")
 
-try:
-    # calibrated wrapper (CalibratedClassifierCV) if available
-    _calibrated = joblib.load(CALIBRATED_MODEL_PATH)
-except Exception:
-    _calibrated = None
+def _try_load_model():
+    global _model, _calibrated
+    if _model is None:
+        try:
+            _model = joblib.load(MODEL_PATH)
+        except Exception as e:
+            # keep _model as None
+            print(f"Warning: failed to load model from {MODEL_PATH}: {e}")
+    if _calibrated is None:
+        try:
+            _calibrated = joblib.load(CALIBRATED_MODEL_PATH)
+        except Exception:
+            _calibrated = None
 
-try:
-    _encoder = joblib.load(ENCODER_PATH)
-except Exception as e:
-    print(f"Warning: failed to load encoder from {ENCODER_PATH}: {e}")
+
+def _try_load_encoder():
+    global _encoder
+    if _encoder is None:
+        try:
+            _encoder = joblib.load(ENCODER_PATH)
+        except Exception as e:
+            print(f"Warning: failed to load encoder from {ENCODER_PATH}: {e}")
+
+
+def _try_load_scaler():
+    global _scaler
+    if _scaler is None:
+        try:
+            _scaler = joblib.load(SCALER_PATH)
+        except Exception:
+            _scaler = None
 
 
 def get_model():
     """Return the base (un-calibrated) model."""
+    _try_load_model()
     return _model
 
 
 def get_calibrated_model():
     """Return a calibrated model wrapper if available, else None."""
+    _try_load_model()
     return _calibrated
 
 
 def get_encoder():
+    _try_load_encoder()
     return _encoder
 
 
+def get_scaler():
+    _try_load_scaler()
+    return _scaler
+
+
 def is_model_available():
+    _try_load_model()
+    _try_load_encoder()
+    _try_load_scaler()
     return (_model is not None or _calibrated is not None) and _encoder is not None
 
 crops = CROPS

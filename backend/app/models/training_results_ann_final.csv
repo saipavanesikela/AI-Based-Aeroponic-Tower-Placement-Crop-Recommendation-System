@@ -1,0 +1,2 @@
+f1_weighted,accuracy,model,dataset_size,iterations
+0.8862945084058986,0.89,ANN_final,1500,1000

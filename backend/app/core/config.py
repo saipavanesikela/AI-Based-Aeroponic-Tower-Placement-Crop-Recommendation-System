@@ -28,3 +28,6 @@ CALIBRATED_MODEL_PATH = MODELS_DIR / "placement_model_calibrated.pkl"
 
 # Minimum confidence (%) required to include a crop in `recommended_crops`
 RECOMMENDATION_CONFIDENCE_THRESHOLD = 74
+ 
+# Optional scaler saved when training scaled models (e.g., ANN)
+SCALER_PATH = MODELS_DIR / "feature_scaler.pkl"

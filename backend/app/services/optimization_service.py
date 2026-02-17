@@ -9,6 +9,7 @@ matplotlib.use("Agg")  # IMPORTANT: non-GUI backend
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
+from app.models.greedy_placement import optimize_tower_placement as model_optimize_tower_placement
 
 # Setup logger
 logger = logging.getLogger("aeroponic.optimization")
@@ -26,7 +27,13 @@ def greedy_tower_placement(
     farm_length: float,
     farm_width: float,
     min_spacing: float,
-    max_towers: int
+    max_towers: int,
+    method: str = "ga",
+    ga_pop_size: int = 60,
+    ga_generations: int = 200,
+    ga_time_limit: float = 2.0,
+    sa_time_limit: float = 2.0,
+    sa_max_iters: int = 5000,
 ) -> List[Tuple[float, float]]:
     """
     Places towers using a greedy grid-based approach while respecting minimum spacing and farm boundaries.
@@ -40,27 +47,20 @@ def greedy_tower_placement(
     Returns:
         List[Tuple[float, float]]: List of (x, y) positions for each tower.
     """
-    logger.info(f"Starting greedy placement: length={farm_length}, width={farm_width}, spacing={min_spacing}, max_towers={max_towers}")
-    positions = []
-    step = min_spacing
+    logger.info(f"Starting greedy placement (hex lattice): length={farm_length}, width={farm_width}, spacing={min_spacing}, max_towers={max_towers}")
     try:
-        y = step / 2
-        while y <= farm_length - step / 2:
-            x = step / 2
-            while x <= farm_width - step / 2:
-                if len(positions) >= max_towers:
-                    logger.info(f"Max towers placed: {len(positions)}")
-                    return positions
-                valid = True
-                for px, py in positions:
-                    dist = math.dist((x, y), (px, py))
-                    if dist < min_spacing:
-                        valid = False
-                        break
-                if valid:
-                    positions.append((round(x, 2), round(y, 2)))
-                x += step
-            y += step
+        positions = model_optimize_tower_placement(
+            farm_length=farm_length,
+            farm_width=farm_width,
+            min_spacing=min_spacing,
+            max_towers=max_towers,
+            method=method,
+            ga_pop_size=ga_pop_size,
+            ga_generations=ga_generations,
+            ga_time_limit=ga_time_limit,
+            sa_time_limit=sa_time_limit,
+            sa_max_iters=sa_max_iters,
+        )
         logger.info(f"Total towers placed: {len(positions)}")
         return positions
     except Exception as e:

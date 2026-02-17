@@ -43,11 +43,11 @@ def calculate_percentage(crop, t, h, s, ph, aqi, w):
 
 
 def percentage_to_class_3way(pct):
+    # Produce only two classes: 2 (high suitability) and 1 (low/medium suitability)
+    # map previous "0" into class 1 so there is no class 0 in the dataset
     if pct >= 70:
         return 2
-    elif pct >= 45:
-        return 1
-    return 0
+    return 1
 
 
 # -------------------------------

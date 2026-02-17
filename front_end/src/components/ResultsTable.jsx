@@ -77,11 +77,11 @@ export default function ResultsTable({ data, error }) {
       )}
       {/* ---------- Table ---------- */}
       <div className="modern-form-card" style={{ padding: 0, background: 'none', boxShadow: 'none' }}>
-        <table className="modern-table">
+        <table className="modern-table" style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th>Crop</th>
-              <th>Confidence (%)</th>
+              <th style={{ textAlign: 'left', paddingLeft: 12 }}>Crop</th>
+              <th style={{ textAlign: 'right', paddingRight: 12 }}>Confidence (%)</th>
             </tr>
           </thead>
           <tbody>
@@ -91,16 +91,16 @@ export default function ResultsTable({ data, error }) {
                 style={{
                   fontWeight:
                     isCropRecommended && item.crop === (displayedCropEntry ? displayedCropEntry.crop : bestCrop?.crop)
-                      ? "600"
-                      : "normal",
+                      ? 600
+                      : 400,
                   backgroundColor:
-                    isCropRecommended && item.crop === bestCrop.crop
+                    isCropRecommended && item.crop === (displayedCropEntry ? displayedCropEntry.crop : bestCrop?.crop)
                       ? "#f0f9ff"
                       : "transparent"
                 }}
               >
-                <td>{item.crop}</td>
-                  <td>{item.confidence}</td>
+                <td style={{ textAlign: 'left', paddingLeft: 12 }}>{item.crop}</td>
+                <td style={{ textAlign: 'right', paddingRight: 12 }}>{item.confidence ?? '-'}</td>
               </tr>
             ))}
           </tbody>

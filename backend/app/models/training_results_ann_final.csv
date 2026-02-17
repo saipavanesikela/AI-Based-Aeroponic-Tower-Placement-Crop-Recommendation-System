@@ -1,2 +1,2 @@
-f1_weighted,accuracy,model,dataset_size,iterations
-0.8862945084058986,0.89,ANN_final,1500,1000
+accuracy,precision_weighted,recall_weighted,f1_weighted,model,dataset_size,iterations
+0.9166666666666666,0.9136937927663734,0.9166666666666666,0.9148701897080888,ANN_colab_style,1500,200

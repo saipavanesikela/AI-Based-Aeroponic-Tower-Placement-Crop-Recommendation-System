@@ -11,6 +11,12 @@ def optimize_tower_placement(
     farm_width: float = 20.0,
     min_spacing: float = 2.5,
     max_towers: int = 15,
+    method: str = "ga",
+    ga_pop_size: int = 60,
+    ga_generations: int = 200,
+    ga_time_limit: float = 2.0,
+    sa_time_limit: float = 2.0,
+    sa_max_iters: int = 5000,
 ):
     # Use the greedy placer that respects spacing and max_towers
     positions = greedy_tower_placement(
@@ -18,6 +24,12 @@ def optimize_tower_placement(
         farm_width=farm_width,
         min_spacing=min_spacing,
         max_towers=max_towers,
+        method=method,
+        ga_pop_size=ga_pop_size,
+        ga_generations=ga_generations,
+        ga_time_limit=ga_time_limit,
+        sa_time_limit=sa_time_limit,
+        sa_max_iters=sa_max_iters,
     )
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
